@@ -1,0 +1,341 @@
+---
+title: "Atividades 1 e 2"
+author: "Marina Valente S. Vermelho"
+date: "2023-04-26"
+output: html_document
+---
+
+```{r}
+# Antes de começar precisei substituir as vírgulas por pontos nas planilhas originais #
+
+# Definindo diretório #
+setwd("D:/Doutorado/Disciplinas/Ciencia Colaborativa/Atividades 1 e 2")
+
+# Pacotes #
+
+library(tidyverse)
+library(dplyr)
+library(lubridate)
+```
+
+```{r}
+# Importando e organizando tabela Vitor #
+
+tab_Vi <- read.csv("D:/Doutorado/Disciplinas/Ciencia Colaborativa/Atividades 1 e 2/atividade1_Vitor_Figueira_Arueira.csv", sep = ";")
+
+# Renomeando colunas #
+names(tab_Vi)[1:10] <- c("amostra", "site", "latitude", "longitude", "data", "spp", "tamanho_petala", "largura_petala", "tamanho_sepala", "largura_sepala")
+
+# Reordenando colunas #
+attach(tab_Vi)
+tab_Vi2 = cbind(amostra, spp, data,site, latitude, longitude, tamanho_petala, largura_petala, tamanho_sepala, largura_sepala)
+
+
+# Importando e organizando tabela Lorrana #
+
+
+tab_Lo <- read.csv("D:/Doutorado/Disciplinas/Ciencia Colaborativa/Atividades 1 e 2/Atividade1_Lorrana.csv", sep = ";")
+
+# Renomeando colunas #
+names(tab_Vi)[1:10] <- c("amostra", "site", "latitude", "longitude", "data", "spp", "tamanho_petala", "largura_petala", "tamanho_sepala", "largura_sepala")
+
+# Reordenando colunas #
+attach(tab_Lo)
+tab_Lo2 = cbind(amostra, spp, data,site, latitude, longitude, tamanho_petala, largura_petala, tamanho_sepala, largura_sepala)
+
+
+# Importando e organizando tabela Marina #
+
+tab_Ma <- read.csv("D:/Doutorado/Disciplinas/Ciencia Colaborativa/Atividades 1 e 2/atividade1_MARINA.csv", sep = ";")
+
+# Renomeado colunas #
+names(tab_Ma)[1:10] <- c("amostra", "site", "latitude", "longitude", "data", "spp", "tamanho_petala", "largura_petala", "tamanho_sepala", "largura_sepala")
+
+# Reordenando colunas #
+attach(tab_Ma)
+tab_Ma2 = cbind(amostra, spp, data,site,latitude, longitude, tamanho_petala, largura_petala, tamanho_sepala, largura_sepala)
+
+
+# Importando e organizando tabela Henrique #
+
+tab_He <- read.csv("D:/Doutorado/Disciplinas/Ciencia Colaborativa/Atividades 1 e 2/atividade1_HenriqueSimfrone.csv", sep = ";")
+
+# Renomeando colunas #
+names(tab_He)[1:10] <- c("amostra", "spp", "tamanho_sepala","largura_sepala", "tamanho_petala", "largura_petala", "site", "longitude", "latitude","data")
+
+# Reordenando colunas #
+attach(tab_He)
+tab_He2 = cbind(amostra, spp, data,site,latitude, longitude, tamanho_petala, largura_petala, tamanho_sepala, largura_sepala)
+
+
+# Importando e organizando tabela Mariana #
+
+tab_Mab <- read.csv("D:/Doutorado/Disciplinas/Ciencia Colaborativa/Atividades 1 e 2/atividade1_MARIANA-BURATO.csv", sep = ";")
+
+# Renomeando colunas #
+names(tab_Mab)[1:10] <- c("amostra", "site", "latitude", "longitude", "data", "spp", "tamanho_petala", "largura_petala", "tamanho_sepala", "largura_sepala")
+
+# Reordenando colunas #
+attach(tab_Mab)
+tab_Mab2 = cbind(amostra, spp, data,site, latitude, longitude, tamanho_petala, largura_petala, tamanho_sepala, largura_sepala)
+
+
+# Importando e organizando tabela Jonatha #
+
+tab_Jo <- read.csv("D:/Doutorado/Disciplinas/Ciencia Colaborativa/Atividades 1 e 2/atividade1_JonathaR.csv", sep = ";")
+
+# Renomeando colunas #
+names(tab_Jo)[1:10] <- c("amostra", "spp", "tamanho_sepala", "largura_sepala", "tamanho_petala", "largura_petala", "site","latitude", "longitude", "data")
+
+# Reordenando colunas #
+attach(tab_Jo)
+tab_Jo2 = cbind(amostra, spp, data,site, latitude, longitude, tamanho_petala, largura_petala, tamanho_sepala, largura_sepala)
+
+```
+
+```{r}
+# Unindo tabelas #
+dados <- rbind(tab_He2, tab_Lo2, tab_Ma2, tab_Mab2, tab_Vi2, tab_Jo2)
+
+```
+
+```{r}
+# Criando data.frame #
+dados <- as.data.frame(dados)
+```
+
+```{r}
+# Padronizando nomes das espécies #
+
+dados$spp[dados$spp == "IRIS_VERSICOLOR"] <- "Iris versicolor"
+dados$spp[dados$spp == "IRIS_VIRGINICA"] <- "Iris virginica"
+dados$spp[dados$spp == "IRIS_SETOSA"] <- "Iris setosa"
+dados$spp[dados$spp == "iris_versicolor"] <- "Iris versicolor"
+dados$spp[dados$spp == "iris_virginica"] <- "Iris virginica"
+dados$spp[dados$spp == "iris_setosa"] <- "Iris setosa"
+dados$spp[dados$spp == "Iris_versicolor"] <- "Iris versicolor"
+dados$spp[dados$spp == "Iris_virginica"] <- "Iris virginica"
+dados$spp[dados$spp == "Iris_setosa"] <- "Iris setosa"
+
+# Padronizando sites #
+
+dados$site[dados$site == "S3"] <- "Site3"
+dados$site[dados$site == "S2"] <- "Site2"
+dados$site[dados$site == "S1"] <- "Site1"
+dados$site[dados$site == "site3"] <- "Site3"
+dados$site[dados$site == "site2"] <- "Site2"
+dados$site[dados$site == "site1"] <- "Site1"
+
+
+# Padronizando formato das datas #
+
+dados$data[dados$data == "01/12/1929"] <- "01_12_1929"
+dados$data[dados$data == "13/02/1930"] <- "13_02_1930"
+dados$data[dados$data == "1929_12_01"] <- "01_12_1929"
+dados$data[dados$data == "1930_02_13"] <- "13_02_1930"
+```
+
+```{r}
+# Convertendo a coluna data com classe "factor" para "date" e padronizando o formato para YYY-MM-DD #
+
+dados$data <- dmy(dados$data)
+is.Date(dados$data)
+class(dados$data)
+```
+
+```{r}
+# Ordenando a planilha pela coluna "spp" #
+
+dados<-dados[order(dados$spp),]
+```
+
+```{r}
+# Visualizando a planilha #
+
+View(dados)
+```
+
+```{r}
+# Exportando em formato .csv #
+
+write.csv2(dados, "TabelaFinal_MarinaVermelho.csv")
+```
+
+
+Atividade 2
+```{r}
+# Definindo diretório #
+setwd("D:/Doutorado/Disciplinas/Ciencia Colaborativa/Atividades 1 e 2")
+
+# Pacotes #
+
+require(dplyr)
+require(ggplot2)
+require(tidyr)
+require(taxize)
+require(validate)
+```
+
+```{r}
+# Importando e organizando a tabela final da atividade anterior #
+
+iris2 <- read.csv("TabelaFinal_MarinaVermelho.csv", sep = ";", header = T)
+iris2$X<-NULL
+```
+
+```{r}
+# Identificando os campos presentes no dataset #
+
+lapply(iris2, unique)
+```
+
+```{r}
+#  Realizando inspeção visual da distribuição dos valores numéricos #
+
+iris2 %>%
+  select(spp, tamanho_petala:largura_sepala) %>%
+  pivot_longer(cols = -spp, names_to = "variavel", values_to = "valores") %>%
+  ggplot(aes(x = valores, fill = spp)) +
+  geom_histogram() +
+  facet_wrap(~ variavel, scales = 'free_x') +
+  theme_classic() +
+  theme(legend.position = "bottom") +
+  labs(x = "tamanho (mm)") +
+  scale_fill_discrete(
+    expression(bold("spp:")),
+    labels = c(expression(italic("Iris setosa")),
+               expression(italic("Iris versicolor")),
+               expression(italic("Iris virginica"))))
+```
+
+```{r}
+# Checando outras variáveis #
+
+rules <- validator(in_range(latitude, min = -90, max = 90),
+                   in_range(latitude, min = -180, max = 180),
+                   is.character(site),
+                   is.numeric(data),
+                   all_complete(iris2))
+
+out   <- confront(iris2, rules)
+summary(out)
+
+```
+```{r}
+plot(out)
+```
+
+```{r}
+# checando se os nomes utilizados dos táxons são válidos #
+
+spp <- iris2 %>%
+  distinct(spp) %>%
+  pull() %>%
+  c("Iris murchosa", .) %>% # inserindo espécie inexistente para testar #
+  get_tsn() %>%
+  data.frame() %>%
+  bind_cols(spp = iris2 %>%
+              distinct(spp) %>%
+              pull() %>%
+              c("Iris murchosa", .))
+```
+
+```{r}
+# Renomeando as variáveis de acordo com o DwC #
+
+iris_1 <- iris2 %>%
+  dplyr::mutate(eventID = paste(site, data, sep = "_"), # create indexing fields
+                occurrenceID = paste(site, data, amostra, sep = "_")) %>%
+  left_join(spp %>%
+              select(spp, uri)) %>% # add species unique identifier
+  dplyr::rename(decimalLongitude = longitude, # rename fields according to DwC
+                decimalLatitude = latitude,
+                eventDate = data,
+                scientificName = spp,
+                scientificNameID = uri) %>%
+  mutate(geodeticDatum = "WGS84", # and add complimentary fields
+         verbatimCoordinateSystem = "decimal degrees",
+         georeferenceProtocol = "Random coordinates obtained from Google Earth",
+         locality = "Gaspe Peninsula",
+         recordedBy = "Edgar Anderson",
+         taxonRank = "spp",
+         organismQuantityType = "individuals",
+         basisOfRecord = "Human observation")
+```
+
+```{r}
+# construindo as três matrizes necessárias #
+
+# eventCore #
+
+eventCore <- iris_1 %>%
+  select(eventID, eventDate, decimalLongitude, decimalLatitude, locality, site,
+         geodeticDatum, verbatimCoordinateSystem, georeferenceProtocol) %>%
+  distinct()
+
+# occurrences #
+
+occurrences <- iris_1 %>%
+  select(eventID, occurrenceID, scientificName, scientificNameID,
+         recordedBy, taxonRank, organismQuantityType, basisOfRecord) %>%
+  distinct()
+
+# measurementsOrFacts #
+
+eMOF <- iris_1 %>%
+  select(eventID, occurrenceID, recordedBy, tamanho_petala:largura_sepala) %>%
+  pivot_longer(cols = tamanho_petala:largura_sepala,
+               names_to = "measurementType",
+               values_to = "measurementValue") %>%
+  mutate(measurementUnit = "cm",
+         measurementType = plyr::mapvalues(measurementType,
+                                           from = c("tamanho_petala", "largura_petala", "tamanho_sepala", "largura_sepala"),
+                                           to = c("tamanho petala", "largura petala", "tamanho sepala", "largura sepala")))
+
+```
+
+```{r}
+# controle de qualidade para checar se todas as planilhas tem os mesmos valores de eventID #
+
+setdiff(eventCore$eventID, occurrences$eventID)
+
+```
+```{r}
+# controle de qualidade para checar se todas as planilhas tem os mesmos valores de eventID #
+
+setdiff(occurrences$eventID, eMOF$eventID)
+```
+
+```{r}
+# controle de qualidade para checar se todas as planilhas tem os mesmos valores de eventID #
+
+# check NA values
+
+eMOF %>%
+  filter(is.na(eventID))
+
+```
+
+```{r}
+# controle de qualidade para checar se todas as planilhas tem os mesmos valores de eventID #
+
+occurrences %>%
+  filter(is.na(eventID))
+
+```
+
+```{r}
+# Escrevendo as matrizes como arquivos de texto e exportando #
+
+rm(list = setdiff(ls(), c("eventCore", "occurrences", "eMOF")))
+
+files <- list(eventCore, occurrences, eMOF)
+data_names <- c("DF_eventCore","DF_occ","DF_eMOF")
+dir.create("Dwc_Files")
+
+
+for(i in 1:length(files)) {
+  path <- paste0(getwd(), "/", "DwC_Files")
+  write.csv(files[[i]], paste0(path, "/", data_names[i], ".csv"))}
+
+```

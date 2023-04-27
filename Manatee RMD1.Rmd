@@ -1,0 +1,306 @@
+---
+title: "Trabalho Final - Acesso a bancos de dados abertos - Peixe-boi (Trichechus manatus)"
+author: "Marina Valente S. Vermelho"
+date: "2023-04-24"
+output: html_document
+---
+
+**Acesso a bancos de dados abertos - *Trichechus manatus***
+
+Para realização deste trabalho utilizaremos os dados da espécie *Trichechus manatus*, popularmente conhecido como Peixe-boi marinho. Dentre os peixes-bois-marinhos são descritas duas subespécies: o peixe-boi-marinho-das-Antilhas *Trichechus manatus manatus* que ocorre na América Central e do Sul, e peixe-boi-marinho-da-Flórida *Trichechus manatus latirostris* que ocorre nos Estados Unidos (Luna, et al., 2011). Esta espécie ocorre em águas costeiras e em rios da região do Atlântico, do norte do Estado da Flórida (EUA), na costa leste do México e da América Central e norte da América do Sul, até o nordeste do Brasil, vive também em águas costeiras e estuários do Caribe e das Antilhas (Marsh, et al., 1986). No Brasil a espécie é considerada extinta nos Estados do Espírito Santo, Bahia e Sergipe (Albuquerque & Marcovaldi, 1982; Borobia & Lodi, 1992; Lima et al., 1992; Lima, 1997), sendo a atual área de ocorrência considerada entre os Estados de Alagoas até o Amapá, porém com áreas de descontinuidade em Alagoas, Pernambuco, Ceará (Lima, 1997; Alves, et al. 2015), Maranhão e Pará (Luna, 2001) contabilizando uma estimativa populacional total de cerca de 1000 animais (Luna, et al., 2018). A partir deste pressuposto utilizaremos as bases de dados GBIF (Global Biodiversity Information Facility) e OBIS (Ocean Biodiversity Information System) para buscar os registros de ocorrências desta espécie objetivando verificar se os dados corroboram com a literatura exposta.
+
+Para começar vamos baixar pacotes necessários e definir o diretório
+
+```{r}
+library('rgbif')
+library('tidyverse')
+library('bdc')
+library('CoordinateCleaner')
+library('ggmap')
+library('mapdata')
+library('maps')
+library('obistools')
+library('devtools')
+devtools::install_github('iobis/obistools')
+setwd("D:/Doutorado/Disciplinas/Ciencia Colaborativa/Manatee")
+```
+
+O GBIF (Global Biodiversity Information Facility) será a primeira opção de repositório e Trichechus manatus a espécie utilizada
+
+```{r}
+# Checando as funcoes
+?occ_data
+
+# Baixando ocorrencias de Trichechus manatus
+manatee_gbif <- occ_data(scientificName = "Trichechus manatus", 
+                      hasCoordinate = TRUE,
+                      hasGeospatialIssue=FALSE)
+
+# Verficando as dimensoes do arquivo baixado
+dim(manatee_gbif)
+```
+
+```{r}
+# Verficando as dimensoes do arquivo baixado
+dim(manatee_gbif$data)
+```
+
+```{r}
+# Checando os campos
+manatee_gbif$data %>% names
+```
+
+Utilizaremos a função **gbif_issues** para vizualisar os problemas desse conjunto de dados e a função **strsplit** para individualizar os issues e poder conferí-los.
+
+```{r}
+# checando problemas reportados
+issues_gbif <- manatee_gbif$data$issues %>% 
+  unique() %>% 
+  strsplit(., "[,]") %>% 
+  unlist()
+
+gbif_issues() %>% 
+  data.frame() %>% 
+  filter(code %in% issues_gbif)
+```
+
+Selecionamos algumas variáveis para a validação dos dados e futuras análises.
+
+```{r}
+manatee_gbif1 <- manatee_gbif$data %>%
+  dplyr::select(scientificName, acceptedScientificName, decimalLatitude, decimalLongitude,
+         issues, waterBody, basisOfRecord, occurrenceStatus, rightsHolder, 
+         datasetName, recordedBy, locality, continent, stateProvince) 
+```
+
+Podemos ver que temos 500 ocorrências e 14 variáveis.
+
+
+
+Vamos aplicar a função **distinct** do pacote **dplyr** para Visualizar quantas ocorrências são únicas.
+
+```{r}
+manatee_gbif1 <- manatee_gbif1 %>% 
+  distinct() 
+```
+
+As 500 ocorrências foram mantidas.
+
+
+
+Para identificar todos os valores únicos presented nos dados, vamos aplicar a função **unique** a cada coluna com um loop na função **lapply**.
+
+```{r}
+# checando niveis dos fatores
+lapply(manatee_gbif1, unique)
+```
+
+
+Utilizando as funções dos pacotes **CoordinateCleaner** e **bcd** podemos avaliar melhor os dados validando as coordenadas geográficas.
+
+```{r}
+# checando coordenadas válidas
+check_pf <- 
+  bdc::bdc_coordinates_outOfRange(
+    data = manatee_gbif1,
+    lat = "decimalLatitude",
+    lon = "decimalLongitude")
+
+# checando coordenadas válidas e próximas a capitais
+cl <- manatee_gbif1 %>%
+  select(acceptedScientificName, decimalLatitude, decimalLongitude) %>%
+  rename(decimallongitude = decimalLongitude,
+         decimallatitude = decimalLatitude,
+         scientificName = acceptedScientificName) %>% 
+  as_tibble() %>% 
+  mutate(val = cc_val(., value = "flagged"),
+         sea = cc_sea(., value = "flagged"),
+         capital = cc_cap(., value = "flagged"))
+```
+
+Não tivemos nenhuma coordenada inválida.
+
+```{r}
+# verificando coordenadas com flags
+
+# capitais
+cl %>% 
+  rename(decimalLongitude = decimallongitude,
+         decimalLatitude = decimallatitude) %>% 
+  bdc::bdc_quickmap(., col_to_map = "capital")  
+```
+
+```{r}
+cl %>% 
+  rename(decimalLongitude = decimallongitude,
+         decimalLatitude = decimallatitude) %>% 
+  bdc::bdc_quickmap(., col_to_map = "sea")  
+```
+
+As figuras validam os dados e descartam a possível ocorrência do Peixe-boi-marinho em terra.
+
+
+Como não haviam dados para "waterbody" substitui essa variável por "stateProvince" para verificar se os estados ou municípios indicados eram área de ocorrência da espécie.
+
+```{r}
+# Aqui eu troquei waterbody para "stateProvince", pois "waterBody" estava como NA.
+# investigar niveis suspeitos
+manatee_gbif1 %>% 
+  distinct(stateProvince) %>% 
+  pull()
+```
+
+```{r}
+# Aqui eu troquei waterbody para "stateProvince", pois "waterBody" estava como NA.
+manatee_gbif1 %>%
+  group_by(stateProvince) %>% 
+  summarise(occ = length(scientificName)) %>% 
+  ggplot(aes(occ, y=stateProvince)) +
+    geom_bar(stat = 'identity') 
+```
+
+Apareceram algumas localidades que não são de ocorrência da espécie e portanto resolvi checar as fontes erradas.
+
+```{r}
+# fonte das regioes erradas
+manatee_gbif1 %>% 
+  filter(stateProvince %in% c("Corozal", "Orange Walk", "Santander", "Toledo")) %>% 
+  distinct(datasetName)
+```
+
+```{r}
+# ocorrencias
+manatee_gbif1 %>% 
+  filter(datasetName %in% c("iNaturalist research-grade observations"))
+```
+
+```{r}
+# filtrando todas do dataset suspeito
+manatee_gbif_ok <- manatee_gbif1 %>% 
+  filter(!datasetName %in% c("iNaturalist research-grade observations"))
+```
+
+```{r}
+world <- map_data('world')
+  
+# checando pontos
+ 
+ggplot() +
+  geom_polygon(data = world, aes(x = long, y = lat, group = group)) +
+  coord_fixed() +
+  theme_classic() +
+  geom_point(data = manatee_gbif_ok, aes(x = decimalLongitude, y = decimalLatitude), color = "red") +
+  labs(x = "longitude", y = "latitude", title = expression(italic("Trichechus manatus")))
+```
+
+Ao realizar este filtro a maior parte das ocorrencias não apareceram, pois possuiam a mesma fonte das localidades pertinentes.
+
+
+
+
+Agora vamos fazer os mesmos procedimentos com os dados do OBIS, utilizando o pacote **robis** e a função **occurrence** deste pacote.
+
+```{r}
+# OBIS
+manatee_obis <- robis::occurrence("Trichechus manatus")
+```
+
+```{r}
+# checando dados
+names(manatee_obis)
+```
+
+```{r}
+manatee_obis1 <- manatee_obis %>% 
+  dplyr::select(scientificName, decimalLatitude, decimalLongitude, bathymetry,
+         flags, waterBody, basisOfRecord, occurrenceStatus, rightsHolder, 
+         datasetName, recordedBy, depth, locality, habitat, continent, stateProvince) %>% 
+  distinct()
+
+# check problemas reportados (flags)
+manatee_obis1 %>% 
+  distinct(flags)
+```
+
+```{r}
+# check NA em datasetName
+manatee_obis1 %>% 
+  filter(!flags %in% c("no_depth,on_land", "on_land", "on_land,depth_exceeds_bath", "depth_exceeds_bath,on_land"),
+         is.na(datasetName)) %>% 
+  distinct(waterBody)
+```
+
+```{r}
+# checando niveis
+manatee_obis1 %>% 
+  filter(!flags %in% c("no_depth,on_land", "on_land", "on_land,depth_exceeds_bath", "depth_exceeds_bath,on_land"),
+         !is.na(datasetName),
+         !waterBody %in% c("North America", "South America")) %>% 
+  lapply(., unique)
+```
+
+```{r}
+# ok
+manatee_obis_ok <- manatee_obis1 %>% 
+  filter(!flags %in% c("no_depth,on_land", "on_land", "on_land,depth_exceeds_bath", "depth_exceeds_bath,on_land"),
+         !is.na(datasetName),
+         !waterBody %in% c("North America", "South America")) 
+```
+
+```{r}
+# check
+ggplot() +
+  geom_polygon(data = world, aes(x = long, y = lat, group = group)) +
+  coord_fixed() +
+  theme_classic() +
+  geom_point(data = manatee_obis_ok, aes(x = decimalLongitude, y = decimalLatitude, color = waterBody)) +
+  labs(x = "longitude", y = "latitude", title = expression(italic("Trichechus manatus")))
+```
+
+O mapa permite visualizar as ocorrencias após os filtros.
+
+Vamos unir os resultados obtidos com o GBIF e OBIS.
+
+```{r}
+# unindo GBIF e OBIS
+
+# vendo diferencas
+setdiff(names(manatee_gbif_ok), names(manatee_obis_ok))
+```
+
+```{r}
+setdiff(names(manatee_obis_ok), names(manatee_gbif_ok))
+```
+
+```{r}
+all_data <- bind_rows(manatee_gbif_ok %>% 
+                        mutate(repo = paste0("gbif", row.names(.))), 
+                      manatee_obis_ok %>% 
+                        mutate(repo = paste0("obis", row.names(.)))) %>%
+  column_to_rownames("repo") %>% 
+  dplyr::select(decimalLongitude, decimalLatitude, depth) %>% 
+  distinct() %>% 
+  rownames_to_column("occ") %>% 
+  separate(col = "occ", into = c("datasetName", "rn"), sep = 4) %>%
+  mutate(scientificName = "Trichechus manatus") %>% 
+  dplyr::select(-rn)
+
+
+# mapeando ocorrencias
+ggplot() +
+  geom_polygon(data = world, aes(x = long, y = lat, group = group)) +
+  coord_fixed() +
+  theme_classic() +
+  geom_point(data = all_data, aes(x = decimalLongitude, y = decimalLatitude, color = datasetName)) +
+  #theme(legend.title = element_blank()) +
+  labs(x = "longitude", y = "latitude", title = expression(italic("Trichechus manatus")))
+```
+
+O mapa final permitiu observar que os dados de ocorrencia da espécie *Trichechus manatus* corroboram em parte com a literatura exposta previamente, e ainda apontam uma lacuna existente, ou ausência de dados de ocorrencia da espécie no Brasil.
+
+
+Exportando planilha final
+
+```{r}
+write.csv(all_data, "D:/Doutorado/Disciplinas/Ciencia Colaborativa/Manatee/occ_GBIF-OBIS_Trichechus_manatus.csv", row.names = FALSE)
+```
